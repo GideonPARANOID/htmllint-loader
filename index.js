@@ -33,17 +33,15 @@ function pad(number, size) {
 }
 
 module.exports = function(content) {
-  var self = this;
-
   // unpack options string
   var optionMap = {
     failOnWarning: true
   };
 
-  self.query
+  this.query
     .slice(1)
     .split('&')
-    .forEach(function(pair) {
+    .forEach((pair) => {
       var pair = pair.split('=');
       optionMap[pair[0]] = pair[1];
     });
@@ -51,34 +49,30 @@ module.exports = function(content) {
   if (optionMap.config) {
     optionMap.config = path.join(process.cwd(), optionMap.config);
   } else {
-    self.emitError('no config')
+    this.emitError('no config')
   }
 
-  var callback = self.async();
+  var callback = this.async();
   if (!callback) {
-    return lint(content);
+    callback = () => {};
   }
 
-  return fs.exists(optionMap.config, function(exists) {
+  return fs.exists(optionMap.config, (exists) => {
     if (exists) {
-      fs.readFile(optionMap.config, function (error, fileString) {
+      fs.readFile(optionMap.config, (error, fileString) => {
 
         return htmllint(content, JSON.parse(fileString))
-          .catch(function(error) {
-            //console.error(error)
-            return callback(error);
-
-          })
-          .then(function(issues) {
+          .then((issues) => {
             if (issues && issues.length) {
-              self.emitWarning(formatter(issues));
+              this.emitWarning(formatter(issues));
             }
 
             return callback(null, issues);
-          });
+          })
+          .catch(callback);
       })
     } else {
-      self.emitError('unable to find specified config file');
+      this.emitError('unable to find specified config file');
     }
   })
 };
