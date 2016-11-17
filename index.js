@@ -2,7 +2,6 @@ var htmllint = require('htmllint');
 var fs = require('fs');
 var path = require('path');
 
-
 /**
  * @param {issue[]} issues list of issues to format
  * @return {string} formatted descriptions of issues
@@ -32,9 +31,21 @@ function pad(number, size) {
   return string;
 }
 
+function lint(content, rules, callback, webpack) {
+  return htmllint(content, rules)
+    .then((issues) => {
+      if (issues && issues.length) {
+        webpack.emitWarning(formatter(issues));
+      }
+
+      return callback(null, content);
+    })
+    .catch(callback);
+}
+
 module.exports = function(content) {
   // unpack options string
-  var optionMap = {
+  var options = {
     failOnWarning: true
   };
 
@@ -43,12 +54,10 @@ module.exports = function(content) {
     .split('&')
     .forEach((pair) => {
       var pair = pair.split('=');
-      optionMap[pair[0]] = pair[1];
+      options[pair[0]] = pair[1];
     });
 
-  if (optionMap.config) {
-    optionMap.config = path.join(process.cwd(), optionMap.config);
-  } else {
+  if (!options.config) {
     this.emitError('no config')
   }
 
@@ -57,22 +66,11 @@ module.exports = function(content) {
     callback = () => {};
   }
 
-  return fs.exists(optionMap.config, (exists) => {
-    if (exists) {
-      fs.readFile(optionMap.config, (error, fileString) => {
-
-        return htmllint(content, JSON.parse(fileString))
-          .then((issues) => {
-            if (issues && issues.length) {
-              this.emitWarning(formatter(issues));
-            }
-
-            return callback(null, issues);
-          })
-          .catch(callback);
-      })
-    } else {
-      this.emitError('unable to find specified config file');
+  fs.readFile(path.join(process.cwd(), options.config), (error, rulesString) => {
+    if (error) {
+      return callback(error)
     }
-  })
+
+    lint(content, JSON.parse(rulesString), callback, this);
+  });
 };
