@@ -1,0 +1,15 @@
+{
+  "name": "htmllint-loader",
+  "version": "0.1.0",
+  "description": "webpack loader for evaluating htmllint rules",
+  "main": "index.js",
+  "dependencies": {
+    "htmllint": "^0.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "gideon mw jones (@gideonparanoid)",
+  "license": "ISC"
+}
