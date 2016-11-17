@@ -36,7 +36,10 @@ module.exports = function(content) {
   var self = this;
 
   // unpack options string
-  var optionMap = {};
+  var optionMap = {
+    failOnWarning: true
+  };
+
   self.query
     .slice(1)
     .split('&')
@@ -61,19 +64,18 @@ module.exports = function(content) {
       fs.readFile(optionMap.config, function (error, fileString) {
 
         return htmllint(content, JSON.parse(fileString))
-          .catch(function(error, issues) {
-            console.log(issues)
-            //self.emitError('ERROR', error);
+          .catch(function(error) {
+            //console.error(error)
             return callback(error);
+
           })
           .then(function(issues) {
-            if (issues.length) {
+            if (issues && issues.length) {
               self.emitWarning(formatter(issues));
             }
 
             return callback(null, issues);
-          })
-
+          });
       })
     } else {
       self.emitError('unable to find specified config file');
